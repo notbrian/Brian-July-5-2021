@@ -1,34 +1,42 @@
 html,
 body,
 #root {
-  height: 100vh;
+  height: 100%;
+  font-family: "Roboto", sans-serif;
 }
 
+select,
+button {
+  font-family: "Roboto", sans-serif;
+}
 .App {
-  height: 100vh;
+  height: 100%;
   text-align: center;
 }
 
-.center-container {
+/* .center-container {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: auto;
-  /* max-width: 88%; */
-}
+} */
+
 #orderbook {
   background-color: #242d3c;
   color: white;
-  width: 100%;
   padding: 10px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 #orderbook-data {
   background-color: #111827;
   display: flex;
-  width: 100%;
   text-align: right;
+  height: 100%;
 }
 
 .data-level {
@@ -44,10 +52,13 @@ body,
 .orderbook-side table {
   table-layout: fixed;
   width: 100%;
+  height: 100%;
+  font-family: "DM Mono", monospace;
 }
 
 .orderbook-table-header {
-  color: #3a4150;
+  color: #646974;
+  font-weight: 500;
 }
 
 #orderbook-header {
@@ -83,9 +94,14 @@ body,
   border: none;
   border-radius: 3px;
   margin-left: 6px;
-  padding: 7px 12px 7px 12px;
+  padding: 7px 11px 7px 11px;
   cursor: pointer;
   color: white;
+  font-size: 16px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-evenly;
 }
 
 #toggle-btn {
@@ -97,9 +113,14 @@ body,
 }
 
 .price-buy {
-  color: #0e6953;
+  color: #0ca172;
 }
 
 .price-sell {
-  color: #801919;
+  color: #d63d40;
+}
+
+.btn-icon {
+  margin: 0 6px 0 6px;
+  width: 13px;
 }
