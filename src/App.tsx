@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import logo from "./logo.svg";
 import "./App.css";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import ToggleIcon from "./assets/toggleicon.svg";
 import KillIcon from "./assets/killicon.svg";
+import _ from "underscore";
 
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
 
-type Order = [price: number, size: number];
+type RawOrder = [price: number, size: number];
+interface Order {
+  price: number;
+  size: number;
+  total?: number;
+}
 
 function formatNumber(num: number) {
   return num.toLocaleString();
@@ -18,6 +23,75 @@ function formatNumberDecimals(num: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function formatData(data: RawOrder[]) {
+  // Map to order structure
+  let formatted: Order[] = data.map((order: RawOrder) => ({
+    price: order[0],
+    size: order[1],
+  }));
+
+  return formatted;
+}
+function calculateTotals(data: Order[]) {
+  // Calculate total
+  data.reduce((acc: number, order: Order) => {
+    const total = acc + order.size;
+    order.total = total;
+    return total;
+  }, 0);
+}
+
+function handleNewData(
+  newData: Order[],
+  existingData: Order[],
+  ascending: boolean = false
+) {
+  // Create a clone of the current state
+  let newState = [...existingData];
+  // Loop over every new delta
+  newData.forEach((delta: Order) => {
+    // Find if the price is already in the book
+
+    const matchingPrice = newState.findIndex((order: Order) => {
+      return order.price === delta.price;
+    });
+
+    // If found,
+    if (matchingPrice !== -1) {
+      // Remove it if 0 size
+      if (delta.size === 0) {
+        newState.splice(matchingPrice, 1);
+      }
+      // Else update size
+      else {
+        newState[matchingPrice].size = delta.size;
+      }
+    }
+
+    // If its a new price level,
+    else {
+      if (delta.size > 0) {
+        // Add it to our cloned data
+        newState.push(delta);
+        // Then sort it
+        newState.sort((a: Order, b: Order) => {
+          if (a.price < b.price) {
+            return ascending ? -1 : 1;
+          }
+          if (a.price > b.price) {
+            return ascending ? 1 : -1;
+          }
+          return 0;
+        });
+        // Then calculate the new totals
+        calculateTotals(newState);
+      }
+    }
+  });
+
+  return newState;
 }
 
 function App() {
@@ -37,14 +111,35 @@ function App() {
 
     client.onmessage = (message) => {
       const data = JSON.parse(message.data as string);
-      if (data.feed === "book_ui_1_snapshot") {
-        console.log(data);
-        setBuyData(data.asks.splice(0, 16).reverse());
-        setSellData(data.bids.splice(0, 16).reverse());
-        //TODO: processing of totals here
+
+      if (!data.event) {
+        let buy = data.bids;
+        let sell = data.asks;
+        buy = formatData(buy);
+        sell = formatData(sell);
+
+        if (data.feed === "book_ui_1_snapshot") {
+          // Map to object structure and calculate totals
+          calculateTotals(buy);
+          calculateTotals(sell);
+
+          // TODO: grouping
+
+          setBuyData(buy);
+          setSellData(sell);
+        } else {
+          if (buy.length > 0) {
+            setBuyData(handleNewData(buy, buyData, false));
+          }
+
+          if (sell.length > 0) {
+            setSellData(handleNewData(sell, sellData, true));
+          }
+        }
       }
     };
-  }, []);
+  }, [buyData, sellData]);
+
   return (
     <div className="App">
       <div id="orderbook">
@@ -65,13 +160,13 @@ function App() {
                   <th className="orderbook-table-header">SIZE</th>
                   <th className="orderbook-table-header">PRICE</th>
                 </tr>
-                {buyData.map((data, i) => {
+                {buyData.slice(0, 15).map(({ price, size, total }, i) => {
                   return (
                     <tr key={i}>
-                      <td>{formatNumber(data[0] * data[1])}</td>
-                      <td>{formatNumber(data[1])}</td>
+                      <td>{total ? formatNumber(total) : ""}</td>
+                      <td>{formatNumber(size)}</td>
                       <td className="price-buy">
-                        {formatNumberDecimals(data[0])}
+                        {formatNumberDecimals(price)}
                       </td>
                     </tr>
                   );
@@ -87,14 +182,14 @@ function App() {
                   <th className="orderbook-table-header">SIZE</th>
                   <th className="orderbook-table-header">TOTAL</th>
                 </tr>
-                {sellData.map((data, i) => {
+                {sellData.slice(0, 15).map(({ price, size, total }, i) => {
                   return (
                     <tr key={i}>
                       <td className="price-sell">
-                        {formatNumberDecimals(data[0])}
+                        {formatNumberDecimals(price)}
                       </td>
-                      <td>{formatNumber(data[1])}</td>
-                      <td>{formatNumber(data[0] * data[1])}</td>
+                      <td>{formatNumber(size)}</td>
+                      <td>{total ? formatNumber(total) : ""}</td>
                     </tr>
                   );
                 })}
@@ -104,11 +199,15 @@ function App() {
         </div>
         <div id="feed-buttons">
           <button className="feed-btn" id="toggle-btn">
-            <img src={ToggleIcon} className="btn-icon" />
+            <img
+              src={ToggleIcon}
+              alt="Toggle feed button."
+              className="btn-icon"
+            />
             Toggle Feed
           </button>
           <button className="feed-btn" id="kill-btn">
-            <img src={KillIcon} className="btn-icon" />
+            <img src={KillIcon} alt="Kill feed button." className="btn-icon" />
             Kill Feed
           </button>
         </div>
