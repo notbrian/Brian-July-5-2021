@@ -93,36 +93,6 @@ function handleNewData(
   return newState;
 }
 
-const testDataXBT = [
-  { price: 1, size: 50, total: 15 },
-  // { price: 2, size: 100, total: 1215 },
-  { price: 2.5, size: 100, total: 1215 },
-  { price: 3, size: 150, total: 8895 },
-  { price: 3.5, size: 150, total: 8895 },
-  { price: 4, size: 200, total: 16515 },
-  { price: 4.5, size: 250, total: 22457 },
-  { price: 5, size: 300, total: 23487 },
-  { price: 5.5, size: 350, total: 30674 },
-  { price: 6.0, size: 400, total: 30674 },
-  { price: 6.5, size: 450, total: 30674 },
-  { price: 7.0, size: 500, total: 30674 },
-];
-
-const testDataETH = [
-  { price: 0.05, size: 50, total: 15 },
-  // { price: 2, size: 100, total: 1215 },
-  { price: 0.1, size: 100, total: 1215 },
-  { price: 0.15, size: 150, total: 8895 },
-  { price: 0.2, size: 150, total: 8895 },
-  { price: 0.25, size: 200, total: 16515 },
-  { price: 0.3, size: 250, total: 22457 },
-  { price: 0.35, size: 300, total: 23487 },
-  { price: 0.4, size: 350, total: 30674 },
-  { price: 0.45, size: 400, total: 30674 },
-  { price: 0.5, size: 450, total: 30674 },
-  { price: 0.55, size: 500, total: 30674 },
-];
-
 function groupData(data: Order[], groupingSize: number) {
   let result = data.reduce((acc: Order[], current: Order) => {
     if (
@@ -174,7 +144,7 @@ function App() {
     client.onerror = (error) => {
       console.log(error);
     };
-  }, []);
+  }, [market]);
 
   useEffect(() => {
     client.onmessage = (message) => {
