@@ -3,7 +3,6 @@ import "./App.css";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import ToggleIcon from "./assets/toggleicon.svg";
 import KillIcon from "./assets/killicon.svg";
-import { group } from "console";
 
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
 
@@ -158,6 +157,8 @@ function App() {
   const [market, setMarket] = useState("PI_XBTUSD");
   const [grouping, setGrouping] = useState(0.5);
 
+  const [kill, setKill] = useState(false);
+
   useEffect(() => {
     client.onopen = () => {
       console.log("WebSocket Client Connected");
@@ -169,31 +170,44 @@ function App() {
         })
       );
     };
+
+    client.onerror = (error) => {
+      console.log(error);
+    };
   }, []);
 
   useEffect(() => {
     client.onmessage = (message) => {
-      const data = JSON.parse(message.data as string);
+      try {
+        // if (kill) throw new Error("Test error");
 
-      if (!data.event) {
-        let buy = data.bids;
-        let sell = data.asks;
-        buy = formatData(buy);
-        sell = formatData(sell);
+        const data = JSON.parse(message.data as string);
+        if (!data.event) {
+          let buy = data.bids;
+          let sell = data.asks;
+          buy = formatData(buy);
+          sell = formatData(sell);
 
-        if (data.feed === "book_ui_1_snapshot") {
-          setBuyData(buy);
-          setSellData(sell);
+          if (data.feed === "book_ui_1_snapshot") {
+            setBuyData(buy);
+            setSellData(sell);
+          } else {
+            if (buy.length > 0) {
+              setBuyData(handleNewData(buy, buyData, false));
+            }
+            if (sell.length > 0) {
+              setSellData(handleNewData(sell, sellData, true));
+            }
+          }
         } else {
-          if (buy.length > 0) {
-            setBuyData(handleNewData(buy, buyData, false));
-          }
-          if (sell.length > 0) {
-            setSellData(handleNewData(sell, sellData, true));
-          }
+          console.log(data);
         }
+      } catch (e) {
+        console.log(e);
       }
     };
+
+    // client.onerror(new Error("test error"));
   }, [buyData, sellData]);
 
   useEffect(() => {
@@ -230,6 +244,11 @@ function App() {
 
   const handleGrouping = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGrouping(parseFloat(event.target.value));
+  };
+
+  const killFeed = () => {
+    client.send(JSON.stringify("error test"));
+    setKill(!kill);
   };
 
   return (
@@ -317,7 +336,7 @@ function App() {
             />
             Toggle Feed
           </button>
-          <button className="feed-btn" id="kill-btn">
+          <button className="feed-btn" id="kill-btn" onClick={killFeed}>
             <img src={KillIcon} alt="Kill feed button." className="btn-icon" />
             Kill Feed
           </button>
