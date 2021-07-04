@@ -61,6 +61,8 @@ button {
 .orderbook-table-header {
   color: #646974;
   font-weight: 500;
+  padding-top: 7px;
+  vertical-align: top;
 }
 
 #orderbook-header {
@@ -104,6 +106,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: space-evenly;
+}
+
+.feed-btn:active {
+  transform: scale(0.95);
 }
 
 #toggle-btn {
