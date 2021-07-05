@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { w3cwebsocket as W3CWebSocket } from "websocket";
+import { IMessageEvent, w3cwebsocket as W3CWebSocket } from "websocket";
 import ToggleIcon from "../assets/toggleicon.svg";
 import KillIcon from "../assets/killicon.svg";
 import {
@@ -15,6 +15,8 @@ import {
 
 // Starts a new WebSocket
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
+
+const buffer = new Set<IMessageEvent>();
 
 const Orderbook = () => {
   const [buyData, setBuyData] = useState<Order[]>([]);
@@ -50,7 +52,19 @@ const Orderbook = () => {
   }, [market]);
 
   useEffect(() => {
+    // Process messages in intervals of 50ms to prevent overload
+    const flush = () => {
+      buffer.forEach((message) => processMessage(message));
+      buffer.clear();
+    };
+
+    let timer = setInterval(flush, 50);
+
     client.onmessage = (message) => {
+      buffer.add(message);
+    };
+
+    const processMessage = (message: IMessageEvent) => {
       try {
         const data = JSON.parse(message.data as string);
         // If the message received isnt an event update, it must be a snapshot or a delta
@@ -85,6 +99,10 @@ const Orderbook = () => {
         // Catch any errors in this process and log it to the console
         console.log(e);
       }
+    };
+
+    return () => {
+      clearInterval(timer);
     };
   }, [buyData, sellData]);
 
@@ -122,6 +140,7 @@ const Orderbook = () => {
       })
     );
 
+    buffer.clear();
     setMarket(market === "PI_XBTUSD" ? "PI_ETHUSD" : "PI_XBTUSD");
   };
 
