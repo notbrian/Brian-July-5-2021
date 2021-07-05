@@ -4,6 +4,7 @@ type Props = {
   reversed?: boolean;
 };
 
+// Component for the orderbook sides
 const OrderbookSide: React.FC<Props> = ({ children, reversed = false }) => (
   <div className={`orderbook-side ${reversed ? "orderbook-reverse" : ""}`}>
     <table>

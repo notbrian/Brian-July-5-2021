@@ -190,6 +190,7 @@ const Orderbook = () => {
     setKill(!kill);
   };
 
+  // Render functions for each table row
   const renderBuyData = (data: Order[]) => {
     return data.slice(0, 15).map(({ price, size, total }, i, arr) => {
       const depth = calcDepth(total!, arr);
