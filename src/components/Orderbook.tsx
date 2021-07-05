@@ -206,6 +206,7 @@ const Orderbook = () => {
         </select>
       </div>
       <div id="orderbook">
+        {/* Buy side */}
         <div className="orderbook-side">
           <table>
             <tbody>
@@ -236,6 +237,7 @@ const Orderbook = () => {
             </tbody>
           </table>
         </div>
+        {/* Sell side */}
         <div className="orderbook-side">
           <table>
             <tbody>

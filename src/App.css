@@ -9,6 +9,14 @@ select,
 button {
   font-family: "Roboto", sans-serif;
 }
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
 .App {
   height: 100%;
   text-align: center;
@@ -71,8 +79,8 @@ button {
   margin: 0;
 }
 
-td,
-th {
+.orderbook-side table td,
+.orderbook-side table th {
   padding-right: 60px;
 }
 /* Header */
@@ -91,7 +99,7 @@ th {
   margin-left: 8px;
 }
 
-#header select {
+#grouping-dropdown {
   margin-right: 20px;
   height: 30px;
   color: white;
