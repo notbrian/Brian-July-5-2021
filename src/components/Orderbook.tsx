@@ -75,8 +75,8 @@ const Orderbook = () => {
           let buy = data.bids;
           let sell = data.asks;
           // Format data to the Order interface structure
-          buy = formatData(buy);
-          sell = formatData(sell);
+          buy = calculateTotals(formatData(buy));
+          sell = calculateTotals(formatData(sell));
 
           // If its the first snapshot, update the master data
           if (data.feed === "book_ui_1_snapshot") {
@@ -88,10 +88,10 @@ const Orderbook = () => {
             if (buy.length > 0) {
               // Merge the new data with our existing data and update the state
               // Pass in false as the third argument for descending sorting
-              setBuyData(handleNewData(buy, buyData, false));
+              setBuyData(calculateTotals(handleNewData(buy, buyData, false)));
             }
             if (sell.length > 0) {
-              setSellData(handleNewData(sell, sellData, true));
+              setSellData(calculateTotals(handleNewData(sell, sellData, true)));
             }
           }
         }

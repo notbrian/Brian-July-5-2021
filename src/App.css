@@ -41,6 +41,7 @@ button:focus {
   text-align: right;
   height: 100%;
   padding: 0px 0px 0px 0px;
+  overflow-y: hidden;
 }
 
 /* Buy and Sell sides */
