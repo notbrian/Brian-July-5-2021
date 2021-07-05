@@ -20,9 +20,9 @@ ETH-USD: 0.05, 0.1, 0.25
 
 The default market is XBT-USD but can be switched to ETH-USD by pressing the `Toggle Feed` button.
 
-The feed can be killed by pressing the `Kill Feed` button to simulate a error on the WebSocket. A test error is sent to the `onerror` function and an error is sent to the `onmessage` function that should fail.
+The feed can be killed by pressing the `Kill Feed` button to simulate a error on the WebSocket. A test error is sent to the `onerror` function and an error is sent to the `onmessage` function that should fail. It also unsubscribes socket the current feed.
 
-On pressing the 
+On pressing the button again, the feed will be resubscribed.
 
 ## Consuming for local development
 
@@ -66,11 +66,9 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-
 ### `npm test`
 
 Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
 ### `npm run build`
 
