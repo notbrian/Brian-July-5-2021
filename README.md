@@ -55,7 +55,7 @@ You will also see any lint errors in the console.
 
 Perform the same steps as above but run `npm run build` instead. This will build the frontend (`npm run build`) to the `build` folder which then can be served lwith `serve -s build` or through your favorite server.
 
-The app will be served at http://localhost:3001/
+The app will be served at http://localhost:3000/
 
 ## Available Scripts
 
