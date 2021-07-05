@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { IMessageEvent, w3cwebsocket as W3CWebSocket } from "websocket";
 import ToggleIcon from "../assets/toggleicon.svg";
@@ -18,8 +18,6 @@ import { useWindowSize } from "./useWindowSize";
 // Starts a new WebSocket
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
 
-const buffer = new Set<IMessageEvent>();
-
 const Orderbook = () => {
   const [buyData, setBuyData] = useState<Order[]>([]);
   const [sellData, setSellData] = useState<Order[]>([]);
@@ -34,7 +32,10 @@ const Orderbook = () => {
 
   const [kill, setKill] = useState(false);
 
-  const { width, height } = useWindowSize();
+  const { width } = useWindowSize();
+
+  const buffer = useRef(new Set<IMessageEvent>());
+
   useEffect(() => {
     // Subscribe to the default market (XBTUSD) when the socket connects
     client.onopen = () => {
@@ -55,18 +56,6 @@ const Orderbook = () => {
   }, [market]);
 
   useEffect(() => {
-    // Process messages in intervals of 50ms to prevent overload
-    const flush = () => {
-      buffer.forEach((message) => processMessage(message));
-      buffer.clear();
-    };
-
-    let timer = setInterval(flush, 50);
-
-    client.onmessage = (message) => {
-      processMessage(message);
-    };
-
     const processMessage = (message: IMessageEvent) => {
       try {
         const data = JSON.parse(message.data as string);
@@ -75,23 +64,26 @@ const Orderbook = () => {
           let buy = data.bids;
           let sell = data.asks;
           // Format data to the Order interface structure
-          buy = calculateTotals(formatData(buy));
-          sell = calculateTotals(formatData(sell));
+          buy = formatData(buy);
+          sell = formatData(sell);
 
           // If its the first snapshot, update the master data
           if (data.feed === "book_ui_1_snapshot") {
-            console.log(buy, sell);
-            setBuyData(buy);
-            setSellData(sell);
+            setBuyData(calculateTotals(buy));
+            setSellData(calculateTotals(sell));
           } else {
             // Else, assume its a delta update
             if (buy.length > 0) {
               // Merge the new data with our existing data and update the state
               // Pass in false as the third argument for descending sorting
-              setBuyData(calculateTotals(handleNewData(buy, buyData, false)));
+              setBuyData((prevState) =>
+                calculateTotals(handleNewData(buy, prevState, false))
+              );
             }
             if (sell.length > 0) {
-              setSellData(calculateTotals(handleNewData(sell, sellData, true)));
+              setSellData((prevState) =>
+                calculateTotals(handleNewData(sell, prevState, true))
+              );
             }
           }
         }
@@ -103,6 +95,17 @@ const Orderbook = () => {
         // Catch any errors in this process and log it to the console
         console.log(e);
       }
+    };
+    // Process messages in intervals of 500ms to prevent overload
+    const flush = () => {
+      buffer.current.forEach((message) => processMessage(message));
+      buffer.current.clear();
+    };
+
+    let timer = setInterval(flush, 500);
+
+    client.onmessage = (message) => {
+      buffer.current.add(message);
     };
 
     return () => {
@@ -144,7 +147,9 @@ const Orderbook = () => {
       })
     );
 
-    buffer.clear();
+    buffer.current.clear();
+    setBuyData([]);
+    setSellData([]);
     setMarket(market === "PI_XBTUSD" ? "PI_ETHUSD" : "PI_XBTUSD");
   };
 
@@ -160,7 +165,7 @@ const Orderbook = () => {
     // Sends a data object that will fail and get caught
     client.onmessage({ data: "error" });
 
-    // Unsubs and subs the market on subsequent presses
+    // Unsubs and subs on subsequent presses
     if (!kill) {
       client.send(
         JSON.stringify({
