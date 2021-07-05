@@ -11,6 +11,7 @@ import {
   handleNewData,
   groupData,
   Order,
+  calcDepth,
 } from "./helpers";
 
 // Starts a new WebSocket
@@ -61,7 +62,7 @@ const Orderbook = () => {
     let timer = setInterval(flush, 50);
 
     client.onmessage = (message) => {
-      buffer.add(message);
+      processMessage(message);
     };
 
     const processMessage = (message: IMessageEvent) => {
@@ -77,6 +78,7 @@ const Orderbook = () => {
 
           // If its the first snapshot, update the master data
           if (data.feed === "book_ui_1_snapshot") {
+            console.log(buy, sell);
             setBuyData(buy);
             setSellData(sell);
           } else {
@@ -210,17 +212,27 @@ const Orderbook = () => {
               <tr>
                 <th className="orderbook-title">TOTAL</th>
                 <th className="orderbook-title">SIZE</th>
-                <th className="orderbook-title">PRICE</th>
+                <th className="orderbook-title price">PRICE</th>
               </tr>
-              {groupedBuyData.slice(0, 15).map(({ price, size, total }, i) => {
-                return (
-                  <tr key={i}>
-                    <td>{total ? formatNumber(total) : ""}</td>
-                    <td>{formatNumber(size)}</td>
-                    <td className="price-buy">{formatNumberDecimals(price)}</td>
-                  </tr>
-                );
-              })}
+              {groupedBuyData
+                .slice(0, 15)
+                .map(({ price, size, total }, i, arr) => {
+                  const depth = calcDepth(total!, arr);
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        background: `linear-gradient(to left, #3E212C ${depth}%, #111827 ${depth}%`,
+                      }}
+                    >
+                      <td>{total ? formatNumber(total) : ""}</td>
+                      <td>{formatNumber(size)}</td>
+                      <td className="price-buy">
+                        <p className="price">{formatNumberDecimals(price)}</p>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -228,21 +240,29 @@ const Orderbook = () => {
           <table>
             <tbody>
               <tr>
-                <th className="orderbook-title">PRICE</th>
+                <th className="orderbook-title price">PRICE</th>
                 <th className="orderbook-title">SIZE</th>
                 <th className="orderbook-title">TOTAL</th>
               </tr>
-              {groupedSellData.slice(0, 15).map(({ price, size, total }, i) => {
-                return (
-                  <tr key={i}>
-                    <td className="price-sell">
-                      {formatNumberDecimals(price)}
-                    </td>
-                    <td>{formatNumber(size)}</td>
-                    <td>{total ? formatNumber(total) : ""}</td>
-                  </tr>
-                );
-              })}
+              {groupedSellData
+                .slice(0, 15)
+                .map(({ price, size, total }, i, arr) => {
+                  const depth = calcDepth(total!, arr);
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        background: `linear-gradient(to right, #103839 ${depth}%, #111827 ${depth}%`,
+                      }}
+                    >
+                      <td className="price-sell">
+                        <p className="price">{formatNumberDecimals(price)}</p>
+                      </td>
+                      <td>{formatNumber(size)}</td>
+                      <td>{total ? formatNumber(total) : ""}</td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>

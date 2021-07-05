@@ -134,3 +134,7 @@ export function groupData(data: Order[], groupingSize: number) {
 
   return result;
 }
+
+export function calcDepth(total: number, arr: Order[]) {
+  return (total! / arr[arr.length - 1].total!) * 100
+}

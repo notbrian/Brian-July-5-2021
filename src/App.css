@@ -32,14 +32,13 @@ button {
   display: flex;
   text-align: right;
   height: 100%;
-  padding: 0px 50px 0px 0px;
+  padding: 0px 0px 0px 0px;
 }
 
 /* Buy and Sell sides */
 
 .orderbook-side {
   width: 100%;
-  /* padding-right: 50px; */
 }
 
 .orderbook-side table {
@@ -68,6 +67,14 @@ button {
   color: #d63d40;
 }
 
+.price {
+  margin: 0;
+}
+
+td,
+th {
+  padding-right: 60px;
+}
 /* Header */
 
 #header {
