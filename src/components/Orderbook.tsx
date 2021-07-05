@@ -76,13 +76,13 @@ const Orderbook = () => {
             if (buy.length > 0) {
               // Merge the new data with our existing data and update the state
               // Pass in false as the third argument for descending sorting
-              setBuyData((prevState) =>
-                calculateTotals(handleNewData(buy, prevState, false))
+              setBuyData((state) =>
+                calculateTotals(handleNewData(buy, state, false))
               );
             }
             if (sell.length > 0) {
-              setSellData((prevState) =>
-                calculateTotals(handleNewData(sell, prevState, true))
+              setSellData((state) =>
+                calculateTotals(handleNewData(sell, state, true))
               );
             }
           }
