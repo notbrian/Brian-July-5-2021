@@ -85,6 +85,11 @@ button:focus {
   padding-right: 60px;
 }
 
+/* fixes iOS background rendering issue */
+.orderbook-side table tr {
+  background-attachment: fixed;
+}
+
 @media only screen and (max-width: 1100px) {
   .orderbook-side table td,
   .orderbook-side table th {

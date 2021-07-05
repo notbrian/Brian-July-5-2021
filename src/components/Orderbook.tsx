@@ -189,7 +189,7 @@ const Orderbook = () => {
         <tr
           key={i}
           style={{
-            background: `linear-gradient(to left, #103839 ${depth}%, #111827 ${depth}%`,
+            backgroundImage: `linear-gradient(to left, #103839 ${depth}%, #111827 ${depth}%`,
           }}
         >
           <td>{total ? formatNumber(total) : ""}</td>
@@ -211,7 +211,7 @@ const Orderbook = () => {
           <tr
             key={i}
             style={{
-              background: `linear-gradient(to ${
+              backgroundImage: `linear-gradient(to ${
                 width && width > 705 ? "right" : "left"
               }, #3E212C ${depth}%, #111827 ${depth}%`,
             }}
