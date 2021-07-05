@@ -6,17 +6,25 @@ import KillIcon from "./assets/killicon.svg";
 
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
 
+// Type definition for how the order data comes from the socket
 type RawOrder = [price: number, size: number];
+
+// Interface for the formatted order
+// Orders are converted to an object format with a optional total property
 interface Order {
   price: number;
   size: number;
   total?: number;
 }
 
+// Formats a number to a string with locale seperators
+// E.g 100000 --> 100,000
 function formatNumber(num: number) {
   return num.toLocaleString();
 }
 
+// Formats a number like formatNumber() but to two decimal places
+// E.g 100000 --> 100,000.00
 function formatNumberDecimals(num: number) {
   return num.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -24,6 +32,7 @@ function formatNumberDecimals(num: number) {
   });
 }
 
+// Takes raw order data and maps it to the object shaped Order interface
 function formatData(data: RawOrder[]) {
   // Map to order structure
   let formatted: Order[] = data.map((order: RawOrder) => ({
@@ -33,6 +42,9 @@ function formatData(data: RawOrder[]) {
 
   return formatted;
 }
+
+// Takes an array of Orders and calculates the total property for each of them based on their size
+// Returns a new array
 function calculateTotals(data: Order[]) {
   let clone = [...data];
   clone.reduce((acc: number, order: Order) => {
@@ -44,6 +56,7 @@ function calculateTotals(data: Order[]) {
   return clone;
 }
 
+// Updates our data with delta data coming in
 function handleNewData(
   newData: Order[],
   existingData: Order[],
@@ -54,14 +67,13 @@ function handleNewData(
   // Loop over every new delta
   newData.forEach((delta: Order) => {
     // Find if the price is already in the book
-
     const matchingPrice = newState.findIndex((order: Order) => {
       return order.price === delta.price;
     });
 
     // If found,
     if (matchingPrice !== -1) {
-      // Remove it if 0 size
+      // Remove it if the size is 0
       if (delta.size === 0) {
         newState.splice(matchingPrice, 1);
       }
@@ -71,12 +83,12 @@ function handleNewData(
       }
     }
 
-    // If its a new price level,
+    // If its a new price level, and the size isn't 0
     else {
       if (delta.size > 0) {
         // Add it to our cloned data
         newState.push(delta);
-        // Then sort it
+        // Then sort the new data
         newState.sort((a: Order, b: Order) => {
           if (a.price < b.price) {
             return ascending ? -1 : 1;
@@ -93,34 +105,50 @@ function handleNewData(
   return newState;
 }
 
+// Groups data together based on the groupingSize parameter
 function groupData(data: Order[], groupingSize: number) {
+  // Loop over every order and create a new result array
   let result = data.reduce((acc: Order[], current: Order) => {
+    // If this isn't the first item, compare the current order with the last one
+    // If the price difference is within the grouping size then
+
+    // toFixed(2) rounds the difference to 2 decimal places,
+    // otherwise theres a bug with repeating numbers for differences like 0.05 and 0.1
+    // And since toFixed() returns a string, convert it back to a number with Number()
     if (
       acc.length > 0 &&
       Number(Math.abs(current.price - acc[acc.length - 1].price).toFixed(2)) <
         groupingSize
     ) {
+      // Add the current size to the last item
       acc[acc.length - 1].size += current.size;
       return acc;
     }
     let clone = { ...current };
 
+    // If the grouping size is a whole number like 1, then round the price down
     if (groupingSize % 1 === 0) {
       clone.price = Math.floor(clone.price);
     }
+    // Serves the same purpose as above but for decimal fractions like 0.1
     if (groupingSize % 0.1 === 0) {
       clone.price = Math.floor(clone.price * 10) / 10;
     }
+
+    // Add the current order to the results array
     acc.push(clone);
     return acc;
   }, []);
 
   return result;
 }
+
 function App() {
   const [buyData, setBuyData] = useState<Order[]>([]);
   const [sellData, setSellData] = useState<Order[]>([]);
 
+  // Seperate our grouped data from our master data to ensure accuracy when switching grouping modes
+  // This is the data that is actually rendered
   const [groupedBuyData, setGroupedBuyData] = useState<Order[]>([]);
   const [groupedSellData, setGroupedSellData] = useState<Order[]>([]);
 
@@ -130,6 +158,7 @@ function App() {
   const [kill, setKill] = useState(false);
 
   useEffect(() => {
+    // Subscribe to the default market (XBTUSD) when the socket connects
     client.onopen = () => {
       console.log("WebSocket Client Connected");
       client.send(
@@ -141,6 +170,7 @@ function App() {
       );
     };
 
+    // Catch any errors directly related to the socket
     client.onerror = (error) => {
       console.log(error);
     };
@@ -149,41 +179,48 @@ function App() {
   useEffect(() => {
     client.onmessage = (message) => {
       try {
-        // if (kill) throw new Error("Test error");
-
         const data = JSON.parse(message.data as string);
+        // If the message received isnt an event update, it must be a snapshot or a delta
         if (!data.event) {
           let buy = data.bids;
           let sell = data.asks;
+          // Format data to the Order interface structure
           buy = formatData(buy);
           sell = formatData(sell);
 
+          // If its the first snapshot, update the master data
           if (data.feed === "book_ui_1_snapshot") {
             setBuyData(buy);
             setSellData(sell);
           } else {
+            // Else, assume its a delta update
             if (buy.length > 0) {
+              // Merge the new data with our existing data and update the state
+              // Pass in false as the third argument for descending sorting
               setBuyData(handleNewData(buy, buyData, false));
             }
             if (sell.length > 0) {
               setSellData(handleNewData(sell, sellData, true));
             }
           }
-        } else {
+        }
+        // Catch if its not a snapshot or delta and log it to the console
+        else {
           console.log(data);
         }
       } catch (e) {
+        // Catch any errors in this process and log it to the console
         console.log(e);
       }
     };
-
-    // client.onerror(new Error("test error"));
   }, [buyData, sellData]);
 
+  // When the market changes from BTC to ETH, change the grouping correspondingly
   useEffect(() => {
     setGrouping(market === "PI_XBTUSD" ? 0.5 : 0.05);
   }, [market]);
 
+  // When the master data is updated, update the grouped data and calculate the totals
   useEffect(() => {
     setGroupedBuyData(calculateTotals(groupData(buyData, grouping)));
   }, [buyData, grouping]);
@@ -192,7 +229,9 @@ function App() {
     setGroupedSellData(calculateTotals(groupData(sellData, grouping)));
   }, [sellData, grouping]);
 
+  // Function to handle toggling between the two markets
   const toggleFeed = () => {
+    // Unsub from the current market
     client.send(
       JSON.stringify({
         event: "unsubscribe",
@@ -201,6 +240,7 @@ function App() {
       })
     );
 
+    // Sub to the other one
     client.send(
       JSON.stringify({
         event: "subscribe",
@@ -212,25 +252,50 @@ function App() {
     setMarket(market === "PI_XBTUSD" ? "PI_ETHUSD" : "PI_XBTUSD");
   };
 
-  const handleGrouping = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleGroupingSelect = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setGrouping(parseFloat(event.target.value));
   };
 
   const killFeed = () => {
-    client.send(JSON.stringify("error test"));
+    // Simulates a error on the socket
+    client.onerror(new Error("Test error"));
+    // Sends a data object that will fail and get caught
+    client.onmessage({ data: "error" });
+
+    // Unsubs and subs the market on subsequent presses
+    if (!kill) {
+      client.send(
+        JSON.stringify({
+          event: "unsubscribe",
+          feed: "book_ui_1",
+          product_ids: [market],
+        })
+      );
+    } else {
+      client.send(
+        JSON.stringify({
+          event: "subscribe",
+          feed: "book_ui_1",
+          product_ids: [market],
+        })
+      );
+    }
+
     setKill(!kill);
   };
 
   return (
     <div className="App">
-      <div id="orderbook">
-        <div id="orderbook-header">
+      <div id="container">
+        <div id="header">
           <p style={{ display: "block" }}>Order Book</p>
           <select
             id="grouping-dropdown"
             name="grouping"
             value={grouping}
-            onChange={handleGrouping}
+            onChange={handleGroupingSelect}
           >
             {market === "PI_XBTUSD" ? (
               <>
@@ -247,14 +312,14 @@ function App() {
             )}
           </select>
         </div>
-        <div id="orderbook-data">
+        <div id="orderbook">
           <div className="orderbook-side">
             <table>
               <tbody>
                 <tr>
-                  <th className="orderbook-table-header">TOTAL</th>
-                  <th className="orderbook-table-header">SIZE</th>
-                  <th className="orderbook-table-header">PRICE</th>
+                  <th className="orderbook-title">TOTAL</th>
+                  <th className="orderbook-title">SIZE</th>
+                  <th className="orderbook-title">PRICE</th>
                 </tr>
                 {groupedBuyData
                   .slice(0, 15)
@@ -276,9 +341,9 @@ function App() {
             <table>
               <tbody>
                 <tr>
-                  <th className="orderbook-table-header">PRICE</th>
-                  <th className="orderbook-table-header">SIZE</th>
-                  <th className="orderbook-table-header">TOTAL</th>
+                  <th className="orderbook-title">PRICE</th>
+                  <th className="orderbook-title">SIZE</th>
+                  <th className="orderbook-title">TOTAL</th>
                 </tr>
                 {groupedSellData
                   .slice(0, 15)
