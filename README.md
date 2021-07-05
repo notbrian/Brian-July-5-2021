@@ -4,13 +4,29 @@ A frontend project built by [Brian Nguyen](https://notbriann.com).
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-### Introduction
+### Overview
 
-This is a frontend application consisting of React + Typescript. 
+This is a frontend application consisting of React + Typescript that shows a live orderbook of XBT-USD and ETH-USD. The data is sourced in real-time from the Crypto Facilities public WebSocket: `wss://www.cryptofacilities.com/ws/v1`
 
-You will need `Node` installed.
+### Features
+
+Live buy and sell orders on the market are shown in real-time on the orderbook. It shows the price, how many orders are at this price point (size), and how much this price level and the ones above it make up of the total orders.
+
+Each market has options for different grouping levels selectable in the top-right dropdown.
+
+XBT-USD: 0.5, 1.0, 2.5 
+
+ETH-USD: 0.05, 0.1, 0.25
+
+The default market is XBT-USD but can be switched to ETH-USD by pressing the `Toggle Feed` button.
+
+The feed can be killed by pressing the `Kill Feed` button to simulate a error on the WebSocket. A test error is sent to the `onerror` function and an error is sent to the `onmessage` function that should fail.
+
+On pressing the 
 
 ## Consuming for local development
+
+You will need `Node` installed.
 
 1. Clone the repo and navigate into it
 
