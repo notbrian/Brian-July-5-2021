@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { IMessageEvent, w3cwebsocket as W3CWebSocket } from "websocket";
 import ToggleIcon from "../assets/toggleicon.svg";
@@ -14,11 +14,13 @@ import {
   calcDepth,
 } from "./helpers";
 import { useWindowSize } from "./useWindowSize";
+import OrderbookSide from "./OrderbookSide";
 
 // Starts a new WebSocket
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
 
 const Orderbook = () => {
+  // Master data
   const [buyData, setBuyData] = useState<Order[]>([]);
   const [sellData, setSellData] = useState<Order[]>([]);
 
@@ -28,6 +30,7 @@ const Orderbook = () => {
   const [groupedSellData, setGroupedSellData] = useState<Order[]>([]);
 
   const [market, setMarket] = useState("PI_XBTUSD");
+  // Grouping range
   const [grouping, setGrouping] = useState(0.5);
 
   const [kill, setKill] = useState(false);
@@ -187,8 +190,8 @@ const Orderbook = () => {
     setKill(!kill);
   };
 
-  const renderBuyData = () => {
-    return groupedBuyData.slice(0, 15).map(({ price, size, total }, i, arr) => {
+  const renderBuyData = (data: Order[]) => {
+    return data.slice(0, 15).map(({ price, size, total }, i, arr) => {
       const depth = calcDepth(total!, arr);
       return (
         <tr
@@ -207,28 +210,26 @@ const Orderbook = () => {
     });
   };
 
-  const renderSellData = () => {
-    return groupedSellData
-      .slice(0, 15)
-      .map(({ price, size, total }, i, arr) => {
-        const depth = calcDepth(total!, arr);
-        return (
-          <tr
-            key={i}
-            style={{
-              backgroundImage: `linear-gradient(to ${
-                width && width > 705 ? "right" : "left"
-              }, #3E212C ${depth}%, #111827 ${depth}%`,
-            }}
-          >
-            <td className="price-sell">
-              <p className="price">{formatNumberDecimals(price)}</p>
-            </td>
-            <td>{formatNumber(size)}</td>
-            <td>{total ? formatNumber(total) : ""}</td>
-          </tr>
-        );
-      });
+  const renderSellData = (data: Order[]) => {
+    return data.slice(0, 15).map(({ price, size, total }, i, arr) => {
+      const depth = calcDepth(total!, arr);
+      return (
+        <tr
+          key={i}
+          style={{
+            backgroundImage: `linear-gradient(to ${
+              width && width > 705 ? "right" : "left"
+            }, #3E212C ${depth}%, #111827 ${depth}%`,
+          }}
+        >
+          <td>{total ? formatNumber(total) : ""}</td>
+          <td>{formatNumber(size)}</td>
+          <td className="price-sell">
+            <p className="price">{formatNumberDecimals(price)}</p>
+          </td>
+        </tr>
+      );
+    });
   };
 
   return (
@@ -240,6 +241,7 @@ const Orderbook = () => {
           name="grouping"
           value={grouping}
           onChange={handleGroupingSelect}
+          data-testid="grouping-dropdown"
         >
           {market === "PI_XBTUSD" ? (
             <>
@@ -258,33 +260,15 @@ const Orderbook = () => {
       </div>
       <div id="orderbook">
         {/* Buy side */}
-        <div className="orderbook-side">
-          <table>
-            <tbody>
-              <tr>
-                <th className="orderbook-title">TOTAL</th>
-                <th className="orderbook-title">SIZE</th>
-                <th className="orderbook-title price">PRICE</th>
-              </tr>
-              {width && width > 705
-                ? renderBuyData()
-                : renderBuyData().reverse()}
-            </tbody>
-          </table>
-        </div>
+        <OrderbookSide reversed={width && width > 705 ? false : true}>
+          {width && width > 705
+            ? renderBuyData(groupedBuyData)
+            : renderBuyData(groupedBuyData).reverse()}
+        </OrderbookSide>
         {/* Sell side */}
-        <div className="orderbook-side">
-          <table>
-            <tbody>
-              <tr>
-                <th className="orderbook-title price">PRICE</th>
-                <th className="orderbook-title">SIZE</th>
-                <th className="orderbook-title">TOTAL</th>
-              </tr>
-              {renderSellData()}
-            </tbody>
-          </table>
-        </div>
+        <OrderbookSide reversed>
+          {renderSellData(groupedSellData)}
+        </OrderbookSide>
       </div>
       <div id="feed-buttons">
         <button className="feed-btn" id="toggle-btn" onClick={toggleFeed}>

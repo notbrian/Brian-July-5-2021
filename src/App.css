@@ -51,6 +51,10 @@ button:focus {
   height: 100%;
 }
 
+.orderbook-reverse {
+  direction: rtl;
+}
+
 .orderbook-side table {
   table-layout: fixed;
   width: 100%;
@@ -104,9 +108,6 @@ button:focus {
   #orderbook {
     flex-direction: column;
     font-size: 10px;
-  }
-  #orderbook .orderbook-side:first-of-type table {
-    direction: rtl;
   }
 
   #orderbook .orderbook-side:nth-of-type(2) table tr:first-of-type {
