@@ -1,6 +1,61 @@
-# Getting Started with Create React App
+# Orderbook
+
+A frontend project built by [Brian Nguyen](https://notbriann.com).
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+### Overview
+
+This is a frontend application consisting of React + Typescript that shows a live orderbook of XBT-USD and ETH-USD. The data is sourced in real-time from the Crypto Facilities public WebSocket: `wss://www.cryptofacilities.com/ws/v1`
+
+### Features
+
+Live buy and sell orders on the market are shown in real-time on the orderbook. It shows the price, how many orders are at this price point (size), and how much this price level and the ones above it make up of the total orders.
+
+Each market has options for different grouping levels selectable in the top-right dropdown.
+
+XBT-USD: 0.5, 1.0, 2.5 
+
+ETH-USD: 0.05, 0.1, 0.25
+
+The default market is XBT-USD but can be switched to ETH-USD by pressing the `Toggle Feed` button.
+
+The feed can be killed by pressing the `Kill Feed` button to simulate a error on the WebSocket. A test error is sent to the `onerror` function and an error is sent to the `onmessage` function that should fail. It also unsubscribes socket the current feed.
+
+On pressing the button again, the feed will be resubscribed.
+
+## Consuming for local development
+
+You will need `Node` installed.
+
+1. Clone the repo and navigate into it
+
+```
+$ git clone https://github.com/notbrian/orderbook.git
+$ cd orderbook
+```
+
+2. Install dependencies
+
+```
+npm install
+```
+3. Launch development server
+
+```
+npm  start
+```
+The page will reload if you make edits.\
+You will also see any lint errors in the console.
+
+4. It should open automatically, but if not access the site at: http://localhost:3000/
+
+
+## Consuming for local production
+
+Perform the same steps as above but run `npm run build` instead. This will build the frontend (`npm run build`) to the `build` folder which then can be served lwith `serve -s build` or through your favorite server.
+
+The app will be served at http://localhost:3000/
 
 ## Available Scripts
 
@@ -11,36 +66,11 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
 ### `npm test`
 
 Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
 ### `npm run build`
 
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
