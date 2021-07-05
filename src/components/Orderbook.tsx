@@ -13,6 +13,7 @@ import {
   Order,
   calcDepth,
 } from "./helpers";
+import { useWindowSize } from "./useWindowSize";
 
 // Starts a new WebSocket
 const client = new W3CWebSocket("wss://www.cryptofacilities.com/ws/v1");
@@ -33,6 +34,7 @@ const Orderbook = () => {
 
   const [kill, setKill] = useState(false);
 
+  const { width, height } = useWindowSize();
   useEffect(() => {
     // Subscribe to the default market (XBTUSD) when the socket connects
     client.onopen = () => {
@@ -180,6 +182,50 @@ const Orderbook = () => {
     setKill(!kill);
   };
 
+  const renderBuyData = () => {
+    return groupedBuyData.slice(0, 15).map(({ price, size, total }, i, arr) => {
+      const depth = calcDepth(total!, arr);
+      return (
+        <tr
+          key={i}
+          style={{
+            background: `linear-gradient(to left, #103839 ${depth}%, #111827 ${depth}%`,
+          }}
+        >
+          <td>{total ? formatNumber(total) : ""}</td>
+          <td>{formatNumber(size)}</td>
+          <td className="price-buy">
+            <p className="price">{formatNumberDecimals(price)}</p>
+          </td>
+        </tr>
+      );
+    });
+  };
+
+  const renderSellData = () => {
+    return groupedSellData
+      .slice(0, 15)
+      .map(({ price, size, total }, i, arr) => {
+        const depth = calcDepth(total!, arr);
+        return (
+          <tr
+            key={i}
+            style={{
+              background: `linear-gradient(to ${
+                width && width > 705 ? "right" : "left"
+              }, #3E212C ${depth}%, #111827 ${depth}%`,
+            }}
+          >
+            <td className="price-sell">
+              <p className="price">{formatNumberDecimals(price)}</p>
+            </td>
+            <td>{formatNumber(size)}</td>
+            <td>{total ? formatNumber(total) : ""}</td>
+          </tr>
+        );
+      });
+  };
+
   return (
     <div id="container">
       <div id="header">
@@ -215,25 +261,9 @@ const Orderbook = () => {
                 <th className="orderbook-title">SIZE</th>
                 <th className="orderbook-title price">PRICE</th>
               </tr>
-              {groupedBuyData
-                .slice(0, 15)
-                .map(({ price, size, total }, i, arr) => {
-                  const depth = calcDepth(total!, arr);
-                  return (
-                    <tr
-                      key={i}
-                      style={{
-                        background: `linear-gradient(to left, #3E212C ${depth}%, #111827 ${depth}%`,
-                      }}
-                    >
-                      <td>{total ? formatNumber(total) : ""}</td>
-                      <td>{formatNumber(size)}</td>
-                      <td className="price-buy">
-                        <p className="price">{formatNumberDecimals(price)}</p>
-                      </td>
-                    </tr>
-                  );
-                })}
+              {width && width > 705
+                ? renderBuyData()
+                : renderBuyData().reverse()}
             </tbody>
           </table>
         </div>
@@ -246,25 +276,7 @@ const Orderbook = () => {
                 <th className="orderbook-title">SIZE</th>
                 <th className="orderbook-title">TOTAL</th>
               </tr>
-              {groupedSellData
-                .slice(0, 15)
-                .map(({ price, size, total }, i, arr) => {
-                  const depth = calcDepth(total!, arr);
-                  return (
-                    <tr
-                      key={i}
-                      style={{
-                        background: `linear-gradient(to right, #103839 ${depth}%, #111827 ${depth}%`,
-                      }}
-                    >
-                      <td className="price-sell">
-                        <p className="price">{formatNumberDecimals(price)}</p>
-                      </td>
-                      <td>{formatNumber(size)}</td>
-                      <td>{total ? formatNumber(total) : ""}</td>
-                    </tr>
-                  );
-                })}
+              {renderSellData()}
             </tbody>
           </table>
         </div>
