@@ -196,7 +196,7 @@ const Orderbook = () => {
       const depth = calcDepth(total!, arr);
       return (
         <tr
-          key={i}
+          key={price}
           style={{
             backgroundImage: `linear-gradient(to left, #103839 ${depth}%, #111827 ${depth}%`,
           }}
@@ -216,7 +216,7 @@ const Orderbook = () => {
       const depth = calcDepth(total!, arr);
       return (
         <tr
-          key={i}
+          key={price}
           style={{
             backgroundImage: `linear-gradient(to ${
               width && width > 705 ? "right" : "left"
